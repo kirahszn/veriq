@@ -10,6 +10,11 @@
     "#deployment": "./src/lib/contracts/deployment.ts",
     "#answers": "./src/lib/local-chain/answers.ts",
     "#local-flow": "./src/lib/local-chain/executeFlow.ts"
+    ,"#arc-chain": "./src/lib/arc/chain.ts"
+    ,"#arc-config": "./src/lib/arc/config.ts"
+    ,"#arc-probe": "./src/lib/arc/probe.ts"
+    ,"#arc-live": "./src/lib/arc/live.ts"
+    ,"#arc-wallets": "./src/lib/wallet/arcWallets.ts"
   },
   "private": true,
   "version": "0.1.0",
@@ -24,6 +29,10 @@
     "typecheck": "tsc --noEmit",
     "local:deploy": "cd .. && node scripts/local-deploy.ts",
     "local:e2e": "cd .. && node scripts/local-e2e.ts"
+    ,"arc:wallets": "cd .. && node scripts/generate-arc-wallets.ts"
+    ,"arc:probe": "cd .. && node --env-file=.env scripts/arc-probe.ts"
+    ,"arc:deploy": "cd .. && node --env-file=.env scripts/arc-deploy.ts"
+    ,"arc:e2e": "cd .. && node --env-file=.env scripts/arc-e2e.ts"
   },
   "dependencies": {
     "next": "14.2.5",

@@ -11,5 +11,9 @@
     "test:agents": "npm --workspace app run test:agents",
     "local:deploy": "npm --workspace app run local:deploy",
     "local:e2e": "npm --workspace app run local:e2e"
+    ,"arc:wallets": "npm --workspace app run arc:wallets"
+    ,"arc:probe": "npm --workspace app run arc:probe"
+    ,"arc:deploy": "npm --workspace app run arc:deploy"
+    ,"arc:e2e": "npm --workspace app run arc:e2e"
   }
 }

@@ -12,6 +12,7 @@ contracts/cache/
 # Environment
 .env
 .env.local
+*.wallet-secrets
 
 # Editors
 .vscode/

@@ -1,0 +1,24 @@
+import { mkdirSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { encodeDeployData } from "viem";
+import { ARC_USDC_ADDRESS } from "../app/src/lib/arc/chain.ts";
+import { createDeploymentRecord, requireDeployedCode, requireSuccessfulArcReceipt } from "../app/src/lib/arc/live.ts";
+import { loadContractArtifacts } from "../app/src/lib/contracts/artifacts.ts";
+import { loadArcWallets } from "../app/src/lib/wallet/arcWallets.ts";
+
+const wallets = await loadArcWallets(process.env);
+const artifact = loadContractArtifacts().veriqEscrow;
+if (!wallets.deployer.account) throw new Error("Missing Arc deployer account");
+requireDeployedCode(await wallets.publicClient.getBytecode({ address: ARC_USDC_ADDRESS }), "Arc USDC interface");
+const deploymentData = encodeDeployData({ abi: artifact.abi, bytecode: artifact.bytecode.object, args: [ARC_USDC_ADDRESS] });
+await wallets.publicClient.estimateGas({ data: deploymentData, account: wallets.deployer.account });
+const hash = await wallets.deployer.deployContract({ abi: artifact.abi, bytecode: artifact.bytecode.object, args: [ARC_USDC_ADDRESS] });
+const receipt = requireSuccessfulArcReceipt(await wallets.publicClient.waitForTransactionReceipt({ hash }), "VeriqEscrow deployment");
+if (!receipt.contractAddress) throw new Error("Missing VeriqEscrow deployment address");
+requireDeployedCode(await wallets.publicClient.getBytecode({ address: receipt.contractAddress }), "VeriqEscrow");
+const configuredToken = await wallets.publicClient.readContract({ address: receipt.contractAddress, abi: artifact.abi, functionName: "escrowToken" });
+if (String(configuredToken).toLowerCase() !== ARC_USDC_ADDRESS.toLowerCase()) throw new Error("Deployed escrow token mismatch");
+const record = createDeploymentRecord({ chainId: wallets.config ? 5_042_002 : 0, rpcHost: "rpc.testnet.arc.io", deployer: wallets.config.addresses.deployer, veriqEscrow: receipt.contractAddress, transactionHash: hash, blockNumber: receipt.blockNumber.toString() });
+mkdirSync(resolve("scripts/generated"), { recursive: true });
+writeFileSync(resolve("scripts/generated/arc-deployment.json"), `${JSON.stringify(record, null, 2)}\n`);
+console.log(JSON.stringify(record, null, 2));
