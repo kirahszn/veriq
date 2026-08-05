@@ -1,0 +1,27 @@
+# Node
+node_modules/
+app/node_modules/
+
+# Next.js
+.next/
+
+# Foundry
+contracts/out/
+contracts/cache/
+
+# Environment
+.env
+.env.local
+
+# Editors
+.vscode/
+.DS_Store
+
+# Logs
+npm-debug.log*
+yarn-error.log*
+
+# Local Anvil deployments
+scripts/generated/
+scripts/*.log
+*.tsbuildinfo

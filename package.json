@@ -1,0 +1,15 @@
+{
+  "name": "veriq",
+  "type": "module",
+  "private": true,
+  "workspaces": ["app"],
+  "scripts": {
+    "build:contracts": "cd contracts && forge build",
+    "build:app": "cd app && npm run build",
+    "build": "npm run build:contracts && npm run build:app",
+    "test:contracts": "cd contracts && forge test",
+    "test:agents": "npm --workspace app run test:agents",
+    "local:deploy": "npm --workspace app run local:deploy",
+    "local:e2e": "npm --workspace app run local:e2e"
+  }
+}

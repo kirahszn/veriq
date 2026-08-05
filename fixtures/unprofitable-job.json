@@ -1,0 +1,8 @@
+{
+  "budgetUsdc": "60",
+  "metricPoints": [7000, 9000, 9800],
+  "payoutBps": [0, 8000, 10000],
+  "estimatedQualityBps": 8200,
+  "estimatedExecutionCostUsdc": "22",
+  "minimumRequiredProfitUsdc": "30"
+}

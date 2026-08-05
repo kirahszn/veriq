@@ -1,0 +1,42 @@
+{
+  "name": "veriq-app",
+  "type": "module",
+  "imports": {
+    "#payout": "./src/lib/payout/estimatePayout.ts",
+    "#provider-agent": "./src/agents/provider/evaluateProviderJob.ts",
+    "#client-agent": "./src/agents/client/selectProvider.ts",
+    "#wallets": "./src/lib/wallet/localWallets.ts",
+    "#artifacts": "./src/lib/contracts/artifacts.ts",
+    "#deployment": "./src/lib/contracts/deployment.ts",
+    "#answers": "./src/lib/local-chain/answers.ts",
+    "#local-flow": "./src/lib/local-chain/executeFlow.ts"
+  },
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "node --test test/*.test.ts",
+    "test:agents": "node --test test/payout.test.ts test/provider-decision.test.ts test/client-selection.test.ts",
+    "test:local": "node --test test/local-execution.test.ts",
+    "typecheck": "tsc --noEmit",
+    "local:deploy": "cd .. && node scripts/local-deploy.ts",
+    "local:e2e": "cd .. && node scripts/local-e2e.ts"
+  },
+  "dependencies": {
+    "next": "14.2.5",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "viem": "^2.38.5"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.1",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "eslint": "8.57.0",
+    "eslint-config-next": "14.2.5",
+    "typescript": "5.5.4"
+  }
+}
