@@ -1,0 +1,122 @@
+/* Shared route clearance and responsive refinements for Milestone 14A. */
+html {
+  scroll-padding-top: 110px;
+  overflow-x: clip;
+}
+
+.topbar nav {
+  min-width: 0;
+}
+
+.topbar nav a.active {
+  color: var(--text);
+  font-weight: 800;
+  background: rgba(88, 217, 255, 0.09);
+  box-shadow: inset 0 -2px 0 var(--cyan);
+  border-radius: 7px;
+  padding: 7px 9px;
+}
+
+.page {
+  min-width: 0;
+  padding-top: 84px;
+}
+
+.page-header {
+  scroll-margin-top: 110px;
+}
+
+.panel,
+.page-header > div {
+  min-width: 0;
+}
+
+.selection-reason {
+  max-width: 760px;
+  overflow-wrap: anywhere;
+  line-height: 1.65;
+}
+
+.read-status {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(9, 23, 37, 0.92);
+  padding: 14px 16px;
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+
+.read-status > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.read-source,.rpc-state { border-radius: 999px; padding: 5px 9px; font-size: 11px; font-weight: 800; }
+.read-source { background: rgba(82,214,157,.1); color: var(--green); }
+.read-status.fallback .read-source,.rpc-data-mismatch { background: rgba(240,128,128,.1); color: var(--red); }
+.rpc-state { border: 1px solid var(--border); }
+.read-status small { color: var(--muted); }
+.refresh-read { margin-left: auto; font-weight: 750; text-decoration: underline; text-underline-offset: 3px; }
+.read-status p { flex: 0 0 100%; margin: 2px 0 0; color: var(--red); overflow-wrap: anywhere; }
+
+@media (max-width: 720px) {
+  html {
+    scroll-padding-top: 150px;
+  }
+
+  .topbar {
+    align-content: start;
+  }
+
+  .topbar nav {
+    flex: 0 0 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px 0 7px;
+  }
+
+  .topbar nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .topbar nav a {
+    flex: 0 0 auto;
+  }
+
+  .topbar nav a.active {
+    padding: 6px 8px;
+  }
+
+  .page {
+    padding-top: 48px;
+  }
+
+  .page-header {
+    scroll-margin-top: 150px;
+  }
+
+  .selection-reason {
+    max-width: 100%;
+  }
+
+  .static-label,
+  .verified-label {
+    white-space: normal;
+    text-align: center;
+  }
+
+  .provider-identity {
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .provider-identity h2 {
+    overflow-wrap: anywhere;
+  }
+
+  .read-status { align-items: flex-start; }
+  .refresh-read { margin-left: 0; }
+}
