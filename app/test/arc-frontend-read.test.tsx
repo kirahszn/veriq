@@ -7,11 +7,12 @@ import { ARC_TESTNET_CHAIN_ID, ARC_TESTNET_RPC_URL, ARC_USDC_ADDRESS, assertOffi
 import { ARC_READ_REVALIDATE_SECONDS, ARC_READ_TIMEOUT_MS, VERIFIED_BUDGET, VERIFIED_ESCROW_ADDRESS, VERIFIED_PROVIDER, formatUsdcBaseUnits, normalizeStatus, requireBps } from "../src/lib/arc/read-model.ts";
 import { classifyReadFailure, readArcWithFallback, readLiveArcState, verifiedFallback, type ArcContractReadClient } from "../src/lib/arc/read-core.ts";
 import { resolveServerRead } from "../src/lib/arc/read-server-policy.ts";
-import { loadContractArtifacts } from "../src/lib/contracts/artifacts.ts";
+import { mockUsdcReadAbi } from "../src/lib/arc/abi/mock-usdc-read.ts";
+import { veriqEscrowReadAbi } from "../src/lib/arc/abi/veriq-escrow-read.ts";
 import { OverviewView, JobsView, JobDetailsView, ProviderHistoryView } from "../src/components/live-pages.tsx";
 import { formatBps } from "../src/lib/ui/format.ts";
 
-const artifacts=loadContractArtifacts();
+const artifacts={veriqEscrow:{abi:veriqEscrowReadAbi},mockUsdc:{abi:mockUsdcReadAbi}};
 const clientAddress="0xd55692a56f3ff2fEC95b0F4547C98D140469D95C" as const;
 const expectedCommitment=`0x${"11".repeat(32)}` as const;
 const providerCommitment=`0x${"22".repeat(32)}` as const;
@@ -66,3 +67,9 @@ test("failed reads are not retained and a subsequent success replaces fallback",
 test("manual refresh bypasses the cached reader",async()=>{let cached=0,fresh=0;const result=await resolveServerRead({fresh:true},{readCached:async()=>{cached++;return verifiedFallback()},readFresh:async()=>{fresh++;return live()},fallback:()=>verifiedFallback()});assert.equal(result.source,"LIVE");assert.deepEqual([cached,fresh],[0,1])});
 test("server cache stores only validated live reads",()=>{const source=readFileSync("src/lib/arc/read-server.ts","utf8");assert.match(source,/unstable_cache\(fetchArcReadStateSerialized/);assert.match(source,/fetchArcReadStateSerialized[\s\S]*readLiveArcState/);assert.doesNotMatch(source,/fetchArcReadStateSerialized[\s\S]{0,300}readArcWithFallback/)});
 test("fallback failures receive sanitized categories",()=>{assert.equal(classifyReadFailure(new Error("request timed out")).category,"timeout");const diagnostic=classifyReadFailure(new Error("fetch failed: authorization=secret-value https://rpc.invalid 0x"+"ab".repeat(32)));assert.equal(diagnostic.category,"connection");assert.doesNotMatch(diagnostic.message,/secret-value|rpc\.invalid|abababab/)});
+test("Arc server and CLI import deployment-safe shared ABIs",()=>{for(const file of ["src/lib/arc/read-server.ts","src/lib/arc/read-live-cli.ts"]){const source=readFileSync(file,"utf8");assert.match(source,/abi\/mock-usdc-read/);assert.match(source,/abi\/veriq-escrow-read/);assert.doesNotMatch(source,/contracts\/artifacts|loadContractArtifacts/)}});
+test("Arc runtime code has no Foundry artifact or parent-directory dependency",()=>{for(const file of ["src/lib/arc/read-core.ts","src/lib/arc/read-server.ts","src/lib/arc/read-live-cli.ts","src/lib/arc/abi/mock-usdc-read.ts","src/lib/arc/abi/veriq-escrow-read.ts"]){const source=readFileSync(file,"utf8");assert.doesNotMatch(source,/contracts[\\/]out|process\.cwd|readFileSync|node:fs|\.\.\/\.\.\/\.\./)}});
+test("MockUSDC read ABI contains decimals and balanceOf",()=>assert.deepEqual(mockUsdcReadAbi.map(item=>item.name),["decimals","balanceOf"]));
+test("VeriqEscrow read ABI exactly covers Job #1 reads",()=>assert.deepEqual(veriqEscrowReadAbi.map(item=>item.name),["escrowToken","getJob","getSettlementResult","getResultCommitment","getProviderHistory"]));
+test("deployment-safe ABIs contain read-only functions only",()=>{for(const item of [...mockUsdcReadAbi,...veriqEscrowReadAbi])assert.equal(item.stateMutability,"view")});
+test("missing ABI artifact is a configuration failure, not RPC unavailable",()=>{const diagnostic=classifyReadFailure(new Error("ENOENT: no such file or directory, open '/var/task/contracts/out/MockUSDC.sol/MockUSDC.json'"));assert.equal(diagnostic.category,"serialization");assert.doesNotMatch(diagnostic.warning,/RPC is temporarily unavailable/i)});

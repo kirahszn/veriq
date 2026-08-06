@@ -59,15 +59,16 @@ export function classifyReadFailure(error: unknown): ArcReadFailureDiagnostic & 
   const name = safeErrorName(error);
   const message = safeErrorMessage(error);
   const details = `${name} ${message}`;
+  if (/enoent|no such file|contracts[\\/]out|forge artifact|artifact path/i.test(details)) return { category: "serialization", name, message, warning: "Arc read configuration is unavailable. Showing the verified Milestone 13B result." };
   if (/chain mismatch/i.test(details)) return { category: "validation", name, message, warning: "Arc returned the wrong chain ID. Showing the verified Milestone 13B result." };
   if (/bytecode|deployed code/i.test(details)) return { category: "validation", name, message, warning: "VeriqEscrow bytecode is unavailable. Showing the verified Milestone 13B result." };
   if (/does not exist/i.test(details)) return { category: "validation", name, message, warning: "Job #1 is unavailable onchain. Showing the verified Milestone 13B result." };
-  if (/abi|decode|unsupported .* response|malformed/i.test(details)) return { category: "abi", name, message, warning: "Arc RPC is temporarily unavailable. Showing the verified Milestone 13B result." };
+  if (/abi|decode|unsupported .* response|malformed/i.test(details)) return { category: "abi", name, message, warning: "Arc contract data could not be decoded. Showing the verified Milestone 13B result." };
   if (/timeout|timed out|abort/i.test(details)) return { category: "timeout", name, message, warning: "Arc RPC is temporarily unavailable. Showing the verified Milestone 13B result." };
   if (/enotfound|eai_again|dns/i.test(details)) return { category: "dns", name, message, warning: "Arc RPC is temporarily unavailable. Showing the verified Milestone 13B result." };
   if (/fetch failed|econn|socket|network/i.test(details)) return { category: "connection", name, message, warning: "Arc RPC is temporarily unavailable. Showing the verified Milestone 13B result." };
   if (/http|rpc|request failed|response/i.test(details)) return { category: "rpc-response", name, message, warning: "Arc RPC is temporarily unavailable. Showing the verified Milestone 13B result." };
-  if (/serializ|json|bigint/i.test(details)) return { category: "serialization", name, message, warning: "Arc RPC is temporarily unavailable. Showing the verified Milestone 13B result." };
+  if (/serializ|json|bigint/i.test(details)) return { category: "serialization", name, message, warning: "Arc read configuration could not be serialized. Showing the verified Milestone 13B result." };
   if (/cache/i.test(details)) return { category: "cache", name, message, warning: "Arc RPC is temporarily unavailable. Showing the verified Milestone 13B result." };
   return { category: "unknown", name, message, warning: "Arc RPC is temporarily unavailable. Showing the verified Milestone 13B result." };
 }

@@ -1,12 +1,12 @@
 import { createPublicClient, http } from "viem";
-import { loadContractArtifacts } from "../contracts/artifacts";
+import { mockUsdcReadAbi } from "./abi/mock-usdc-read";
+import { veriqEscrowReadAbi } from "./abi/veriq-escrow-read";
 import { ARC_TESTNET_RPC_URL, arcTestnet } from "./chain";
 import { readLiveArcState } from "./read-core";
 import { ARC_READ_TIMEOUT_MS, formatUsdcBaseUnits } from "./read-model";
 
-const artifacts = loadContractArtifacts();
 const client = createPublicClient({ chain: arcTestnet, transport: http(ARC_TESTNET_RPC_URL, { timeout: ARC_READ_TIMEOUT_MS, retryCount: 1 }) });
-const result = await readLiveArcState(client, artifacts.veriqEscrow.abi, artifacts.mockUsdc.abi);
+const result = await readLiveArcState(client, veriqEscrowReadAbi, mockUsdcReadAbi);
 
 const report = {
   source: result.source,

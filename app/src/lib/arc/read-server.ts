@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { createPublicClient, http } from "viem";
-import { loadContractArtifacts } from "../contracts/artifacts";
+import { mockUsdcReadAbi } from "./abi/mock-usdc-read";
+import { veriqEscrowReadAbi } from "./abi/veriq-escrow-read";
 import { ARC_TESTNET_RPC_URL, arcTestnet } from "./chain";
 import { ARC_READ_REVALIDATE_SECONDS, classifyReadFailure, readLiveArcState, verifiedFallback } from "./read-core";
 import { ARC_READ_TIMEOUT_MS, type ArcReadResult } from "./read-model";
@@ -11,8 +12,7 @@ function createArcReadClient() {
 }
 
 async function fetchArcReadStateSerialized() {
-  const artifacts = loadContractArtifacts();
-  const result = await readLiveArcState(createArcReadClient(), artifacts.veriqEscrow.abi, artifacts.mockUsdc.abi);
+  const result = await readLiveArcState(createArcReadClient(), veriqEscrowReadAbi, mockUsdcReadAbi);
   return JSON.stringify(result, (_, value) => typeof value === "bigint" ? { __veriqBigint: value.toString() } : value);
 }
 
