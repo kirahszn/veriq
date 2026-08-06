@@ -36,6 +36,43 @@ html {
   overflow: visible;
 }
 
+.overview-route { --overview-gap: clamp(72px, 9vw, 116px); }
+.overview-route .overview-hero { max-width: 960px; padding-bottom: var(--overview-gap); }
+.overview-route .overview-hero .actions { flex-wrap: wrap; }
+.overview-route .overview-hero .button { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding-inline: 20px; transition: transform .16s ease, border-color .16s ease, background-color .16s ease; }
+.overview-route .overview-hero .button.primary { background: linear-gradient(135deg,var(--cyan),#a6eaff); border-color: var(--cyan); }
+.overview-route .overview-hero .button.secondary:hover { border-color: #49637f; background: rgba(20,42,66,.8); }
+.overview-section { margin-bottom: var(--overview-gap); }
+.overview-heading { margin-bottom: 28px; }
+.overview-heading h2,.overview-demo-card h2 { font-size: clamp(28px,4vw,42px); letter-spacing: -.04em; line-height: 1.08; margin: 10px 0 0; }
+.overview-heading p,.overview-demo-card p { color: var(--muted); font-size: 15px; margin: 10px 0 0; }
+.overview-steps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 28px; }
+.overview-steps li { position: relative; min-height: 174px; padding: 22px; border: 1px solid var(--border); border-radius: var(--radius); background: linear-gradient(155deg,rgba(14,29,48,.95),rgba(9,21,35,.96)); }
+.overview-steps li:not(:last-child)::after { content: "→"; position: absolute; right: -21px; top: 50%; transform: translateY(-50%); color: var(--cyan); font-size: 17px; }
+.step-number { color: var(--cyan); font-family: ui-monospace,SFMono-Regular,Consolas,monospace; font-size: 11px; }
+.overview-steps h3 { margin: 27px 0 7px; font-size: 17px; }
+.overview-steps p { color: var(--muted); margin: 0; }
+.verified-example { border-block: 1px solid var(--border); padding-block: clamp(52px,7vw,78px); }
+.verified-example .read-status { margin: 0 0 24px; }
+.settlement-metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 34px; }
+.settlement-metrics article { position: relative; display: flex; flex-direction: column; min-width: 0; }
+.settlement-metrics article:not(:last-child)::after { content: "→"; position: absolute; right: -22px; top: 48%; color: #49617a; font-size: 18px; }
+.settlement-metrics span { color: var(--muted); font-size: 12px; }
+.settlement-metrics strong { font-size: clamp(35px,5vw,56px); letter-spacing: -.055em; line-height: 1.15; overflow-wrap: anywhere; }
+.settlement-metrics article:first-child strong { color: var(--cyan); }
+.settlement-metrics article:nth-child(2) strong { color: #98adff; }
+.settlement-metrics small { color: var(--muted); margin-top: 7px; }
+.verified-job-link { display: inline-block; margin-top: 30px; color: var(--cyan); font-weight: 750; }
+.overview-demo-card { display: flex; align-items: center; justify-content: space-between; gap: 30px; padding: 30px; border: 1px solid var(--border); border-radius: var(--radius); background: linear-gradient(115deg,rgba(14,29,48,.98),rgba(11,29,46,.78)); }
+.overview-demo-card>div { max-width: 700px; }
+.overview-demo-card .button { flex: 0 0 auto; }
+.architecture ol { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 28px; }
+.architecture li { position: relative; text-align: center; padding: 15px 10px; border-block: 1px solid var(--border); font-weight: 700; }
+.architecture li:not(:last-child)::after { content: "→"; position: absolute; right: -20px; color: var(--cyan); }
+.overview-footer { align-items: center; gap: 22px; }
+.overview-footer span:first-child { margin-right: auto; }
+.overview-footer strong { color: #8fa1b6; font-weight: 700; }
+
 .panel,
 .page-header > div {
   min-width: 0;
@@ -150,6 +187,18 @@ html {
     padding-top: 36px;
     scroll-margin-top: 150px;
   }
+
+  .overview-route { --overview-gap: 64px; }
+  .overview-steps,.settlement-metrics,.architecture ol { grid-template-columns: 1fr; gap: 12px; }
+  .overview-steps li { min-height: 0; padding: 20px; }
+  .overview-steps h3 { margin-top: 18px; }
+  .overview-steps li:not(:last-child)::after,.settlement-metrics article:not(:last-child)::after,.architecture li:not(:last-child)::after { content: "↓"; top: auto; right: 50%; bottom: -19px; transform: translateX(50%); z-index: 2; }
+  .settlement-metrics { gap: 28px; }
+  .settlement-metrics article { padding-bottom: 4px; }
+  .overview-demo-card { align-items: stretch; flex-direction: column; padding: 22px; }
+  .overview-demo-card .button { text-align: center; }
+  .architecture ol { gap: 24px; }
+  .overview-footer { align-items: flex-start; }
 
   .selection-reason {
     max-width: 100%;

@@ -6,6 +6,7 @@ export const VERIFIED_JOB_ID = 1n;
 export const VERIFIED_PROVIDER: Address = "0xA6Bd2273219904699B67Fb64988a32249dFEc241";
 export const VERIFIED_BUDGET = 1_000_000n;
 export const ARC_READ_REVALIDATE_SECONDS = 60;
+export const ARC_READ_TIMEOUT_MS = 15_000;
 
 export type ArcDataSource = "LIVE" | "VERIFIED_FALLBACK";
 export type ArcRpcState = "Live" | "Unavailable" | "Data mismatch";

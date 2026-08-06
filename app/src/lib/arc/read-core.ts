@@ -49,7 +49,27 @@ export function verifiedFallback(reason = "Arc RPC is temporarily unavailable. S
 
 export async function readArcWithFallback(client: ArcContractReadClient, escrowAbi: Abi, usdcAbi: Abi, now = new Date()): Promise<ArcReadResult> {
   try { return await readLiveArcState(client, escrowAbi, usdcAbi, now); }
-  catch (error) { return verifiedFallback(classifyReadFailure(error), now); }
+  catch (error) { return verifiedFallback(classifyReadFailure(error).warning, now); }
+}
+
+export type ArcReadFailureCategory = "timeout" | "connection" | "dns" | "rpc-response" | "validation" | "abi" | "cache" | "serialization" | "unknown";
+export interface ArcReadFailureDiagnostic { category: ArcReadFailureCategory; name: string; message: string }
+
+export function classifyReadFailure(error: unknown): ArcReadFailureDiagnostic & { warning: string } {
+  const name = safeErrorName(error);
+  const message = safeErrorMessage(error);
+  const details = `${name} ${message}`;
+  if (/chain mismatch/i.test(details)) return { category: "validation", name, message, warning: "Arc returned the wrong chain ID. Showing the verified Milestone 13B result." };
+  if (/bytecode|deployed code/i.test(details)) return { category: "validation", name, message, warning: "VeriqEscrow bytecode is unavailable. Showing the verified Milestone 13B result." };
+  if (/does not exist/i.test(details)) return { category: "validation", name, message, warning: "Job #1 is unavailable onchain. Showing the verified Milestone 13B result." };
+  if (/abi|decode|unsupported .* response|malformed/i.test(details)) return { category: "abi", name, message, warning: "Arc RPC is temporarily unavailable. Showing the verified Milestone 13B result." };
+  if (/timeout|timed out|abort/i.test(details)) return { category: "timeout", name, message, warning: "Arc RPC is temporarily unavailable. Showing the verified Milestone 13B result." };
+  if (/enotfound|eai_again|dns/i.test(details)) return { category: "dns", name, message, warning: "Arc RPC is temporarily unavailable. Showing the verified Milestone 13B result." };
+  if (/fetch failed|econn|socket|network/i.test(details)) return { category: "connection", name, message, warning: "Arc RPC is temporarily unavailable. Showing the verified Milestone 13B result." };
+  if (/http|rpc|request failed|response/i.test(details)) return { category: "rpc-response", name, message, warning: "Arc RPC is temporarily unavailable. Showing the verified Milestone 13B result." };
+  if (/serializ|json|bigint/i.test(details)) return { category: "serialization", name, message, warning: "Arc RPC is temporarily unavailable. Showing the verified Milestone 13B result." };
+  if (/cache/i.test(details)) return { category: "cache", name, message, warning: "Arc RPC is temporarily unavailable. Showing the verified Milestone 13B result." };
+  return { category: "unknown", name, message, warning: "Arc RPC is temporarily unavailable. Showing the verified Milestone 13B result." };
 }
 
 export function integrityWarnings(job: NormalizedLiveJob, history: NormalizedProviderHistory, escrowBalance: bigint): string[] {
@@ -84,16 +104,20 @@ function requireStatusValue(value: unknown): bigint | number {
   throw new Error("Job status is malformed");
 }
 
-function classifyReadFailure(error: unknown): string {
-  const message = error instanceof Error ? error.message : "Arc read failed";
-  if (/chain mismatch/i.test(message)) return "Arc returned the wrong chain ID. Showing the verified Milestone 13B result.";
-  if (/bytecode|deployed code/i.test(message)) return "VeriqEscrow bytecode is unavailable. Showing the verified Milestone 13B result.";
-  if (/does not exist/i.test(message)) return "Job #1 is unavailable onchain. Showing the verified Milestone 13B result.";
-  return "Arc RPC is temporarily unavailable. Showing the verified Milestone 13B result.";
-}
-
 function safeWarning(value: string): string {
   return value.replace(/0x[0-9a-fA-F]{64}/g, "[redacted]").slice(0, 240);
+}
+
+function safeErrorName(error: unknown): string {
+  return error instanceof Error && /^[A-Za-z][A-Za-z0-9]*Error$/.test(error.name) ? error.name : "Error";
+}
+
+function safeErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : "Arc read failed";
+  return safeWarning(message)
+    .replace(/https?:\/\/\S+/gi, "[redacted-url]")
+    .replace(/0x[0-9a-fA-F]{40,}/g, "[redacted]")
+    .replace(/(authorization|api[-_ ]?key|secret|token|private[-_ ]?key)\s*[:=]\s*\S+/gi, "$1=[redacted]");
 }
 
 export { ARC_READ_REVALIDATE_SECONDS };
