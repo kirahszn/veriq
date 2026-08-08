@@ -22,7 +22,7 @@ test("overview renders Arc Testnet status",()=>assert.match(render(React.createE
 test("overview renders verified 92% quality",()=>assert.match(overview(),/Measured quality[\s\S]*92%/));
 test("overview renders 85% payout",()=>assert.match(overview(),/Provider payout[\s\S]*85%/));
 test("overview renders 0.15 USDC refund",()=>assert.match(overview(),/Client refund[\s\S]*0\.15 USDC/));
-test("navigation includes every required section",()=>{const html=render(React.createElement(AppShell,null,"content"));for(const item of navigation)assert.match(html,new RegExp(item.label));assert.deepEqual(navigation.map(n=>n.label),["Overview","Demo","Jobs","Provider Selection","Provider Decision","Provider History"])});
+test("navigation includes every required section",()=>{const html=render(React.createElement(AppShell,null,"content"));for(const item of navigation)assert.match(html,new RegExp(item.label));assert.deepEqual(navigation.map(n=>n.label),["Overview","Demo","Jobs","Provider Selection","Provider Decision","Provider History","Execute"])});
 test("Job #1 displays status Settled",()=>assert.match(render(React.createElement(JobsPage)),/Job #1[\s\S]*Settled/));
 test("Job #1 displays budget 1 USDC",()=>assert.match(details(),/Budget[\s\S]*1 USDC/));
 test("job details display 46\/50 answers",()=>assert.match(details(),/46\/50 answers/));
