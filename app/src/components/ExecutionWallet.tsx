@@ -14,6 +14,7 @@ import {
   type InjectedProvider,
 } from "../lib/wallet/injectedWallet";
 import { AddressDisplay, NetworkBadge } from "./ui";
+import { CreateFundedJobStep } from "./CreateFundedJobStep";
 
 type Status = "disconnected" | "not-installed" | "connecting" | "connected" | "wrong-network" | "rejected" | "error";
 
@@ -120,7 +121,7 @@ export function ExecutionWallet() {
   }
 
   const connected = status === "connected" && address;
-  return <section className="execution-panel panel" aria-live="polite">
+  return <div className="execution-flow"><section className="execution-panel panel" aria-live="polite">
     <header className="execution-step"><span>01 / CONNECT</span><p>Connect a wallet to execute Veriq on Arc Testnet.</p></header>
     {!connected ? <div className="execution-disconnected">
       <button className="button primary" type="button" onClick={connect} disabled={status === "connecting"}>
@@ -138,5 +139,5 @@ export function ExecutionWallet() {
       <button className="button secondary" type="button" onClick={reset}>Disconnect</button>
       <small className="execution-note">Disconnect resets Veriq locally; wallet permissions are managed by your wallet.</small>
     </>}
-  </section>;
+  </section>{connected && providerRef.current && <CreateFundedJobStep key={address.toLowerCase()} client={address} provider={providerRef.current} onBalanceRefresh={()=>refreshBalance(address)}/>}</div>;
 }
