@@ -1,19 +1,16 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import type { Address } from "viem";
 import { ARC_TESTNET_EXPLORER_URL } from "../lib/arc/chain";
 import {
   INTERACTIVE_BUDGET,
   INTERACTIVE_PROVIDER_ADDRESS,
   INTERACTIVE_SCORER,
-  INTERACTIVE_STORAGE_KEY,
   INTERACTIVE_TASK_TYPE,
-  parsePersistedInteractiveJob,
-  serializeInteractiveJob,
   type PersistedInteractiveJob,
 } from "../lib/arc/interactive-job";
-import { createBrowserJobAdapter, executeCreateFundedJob, validatePersistedJob, type CreateFundedJobPhase } from "../lib/wallet/createFundedJob";
+import { createBrowserJobAdapter, executeCreateFundedJob, type CreateFundedJobPhase } from "../lib/wallet/createFundedJob";
 import type { InjectedProvider } from "../lib/wallet/injectedWallet";
 import { AddressDisplay } from "./ui";
 
@@ -28,35 +25,20 @@ const phaseLabels: Record<CreateFundedJobPhase, string> = {
   "confirming-funded": "Confirming funded state",
 };
 
-export function CreateFundedJobStep({ client, provider, onBalanceRefresh }: { client: Address; provider: InjectedProvider; onBalanceRefresh: () => Promise<void> }) {
+export function CreateFundedJobStep({ client, provider, onBalanceRefresh, activeJob=null, onJobFunded }: { client: Address; provider: InjectedProvider; onBalanceRefresh: () => Promise<void>; activeJob?: PersistedInteractiveJob|null; onJobFunded?: (job: PersistedInteractiveJob)=>void }) {
   const [phase, setPhase] = useState<CreateFundedJobPhase | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [funded, setFunded] = useState<PersistedInteractiveJob | null>(null);
-  const [restoring, setRestoring] = useState(false);
+  const [created, setCreated] = useState<PersistedInteractiveJob | null>(null);
+  const funded=activeJob??created;
   const adapter = useMemo(() => createBrowserJobAdapter(provider), [provider]);
-
-  useEffect(() => {
-    let active = true;
-    const persisted = parsePersistedInteractiveJob(localStorage.getItem(INTERACTIVE_STORAGE_KEY));
-    if (!persisted || persisted.client.toLowerCase() !== client.toLowerCase()) return;
-    setRestoring(true);
-    void validatePersistedJob(persisted).then(valid => {
-      if (!active) return;
-      if (valid) setFunded(persisted);
-      else setError("A saved job was found but could not be confirmed as Funded on Arc.");
-    }).finally(() => { if (active) setRestoring(false); });
-    return () => { active = false; };
-  }, [client]);
 
   async function createAndFund() {
     setError(null);
     setPhase("checking-balance");
     try {
       const result = await executeCreateFundedJob(adapter, client, setPhase);
-      setFunded(result.persisted);
+      setCreated(result.persisted); onJobFunded?.(result.persisted);
       setPhase(null);
-      try { localStorage.setItem(INTERACTIVE_STORAGE_KEY, serializeInteractiveJob(result.persisted)); }
-      catch { setError("Job confirmed on Arc, but its public recovery state could not be saved in this browser."); }
       await onBalanceRefresh();
     } catch (cause) {
       setPhase(null);
@@ -74,8 +56,8 @@ export function CreateFundedJobStep({ client, provider, onBalanceRefresh }: { cl
         <div><dt>Task</dt><dd>{INTERACTIVE_TASK_TYPE}</dd></div>
       </dl>
       <div className="execution-action">
-        <button className="button primary" type="button" onClick={createAndFund} disabled={phase !== null || restoring}>
-          {restoring ? "Validating saved job…" : phase ? phaseLabels[phase] : "Create & Fund Job"}
+        <button className="button primary" type="button" onClick={createAndFund} disabled={phase !== null}>
+          {phase ? phaseLabels[phase] : "Create & Fund Job"}
         </button>
         {phase && <span className="execution-progress">{phaseLabels[phase]}</span>}
         {error && <p className="execution-error" role="alert">{error}</p>}
@@ -83,7 +65,7 @@ export function CreateFundedJobStep({ client, provider, onBalanceRefresh }: { cl
     </> : <>
       <dl className="execution-metadata execution-result">
         <div><dt>Job ID</dt><dd>#{funded.jobId}</dd></div>
-        <div><dt>Status</dt><dd className="success">Funded</dd></div>
+        <div><dt>Status</dt><dd className="success">{funded.status}</dd></div>
         <div><dt>Budget</dt><dd>{formatBudget(INTERACTIVE_BUDGET)} USDC</dd></div>
         <div><dt>Client</dt><dd><AddressDisplay address={funded.client}/></dd></div>
         <div><dt>Provider</dt><dd><AddressDisplay address={funded.provider}/></dd></div>

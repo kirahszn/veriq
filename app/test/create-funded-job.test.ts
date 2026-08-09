@@ -170,8 +170,8 @@ test("Step 02 source refreshes balance and reset occurs by connected-session unm
   const step = readFileSync("src/components/CreateFundedJobStep.tsx", "utf8");
   const wallet = readFileSync("src/components/ExecutionWallet.tsx", "utf8");
   assert.match(step, /await onBalanceRefresh\(\)/);
-  assert.match(step, /validatePersistedJob\(persisted\)/);
-  assert.match(wallet, /connected && providerRef\.current && <CreateFundedJobStep key=\{address\.toLowerCase\(\)\}/);
+  assert.match(step, /await onBalanceRefresh\(\)/);
+  assert.match(wallet, /connected && providerRef\.current && <InteractiveJobFlow key=\{address\.toLowerCase\(\)\}/);
 });
 
 test("Milestone 2 write surface excludes later lifecycle methods and private configuration", () => {

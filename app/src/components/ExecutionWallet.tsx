@@ -14,7 +14,7 @@ import {
   type InjectedProvider,
 } from "../lib/wallet/injectedWallet";
 import { AddressDisplay, NetworkBadge } from "./ui";
-import { CreateFundedJobStep } from "./CreateFundedJobStep";
+import { InteractiveJobFlow, type InteractiveRole } from "./InteractiveJobFlow";
 
 type Status = "disconnected" | "not-installed" | "connecting" | "connected" | "wrong-network" | "rejected" | "error";
 
@@ -23,6 +23,7 @@ export function ExecutionWallet() {
   const [address, setAddress] = useState<Address | null>(null);
   const [balance, setBalance] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [role,setRole]=useState<InteractiveRole>("Client");
   const requestVersion = useRef(0);
   const providerRef = useRef<InjectedProvider | null>(null);
 
@@ -32,6 +33,7 @@ export function ExecutionWallet() {
     setBalance(null);
     setError(null);
     setStatus("disconnected");
+    setRole("Client");
   }, []);
 
   const refreshBalance = useCallback(async (account: Address) => {
@@ -132,12 +134,12 @@ export function ExecutionWallet() {
       <dl className="execution-metadata">
         <div><dt>Wallet</dt><dd><AddressDisplay address={address}/></dd></div>
         <div><dt>Network</dt><dd><NetworkBadge/></dd></div>
-        <div><dt>Role</dt><dd>Client</dd></div>
+        <div><dt>Role</dt><dd>{role}</dd></div>
         <div><dt>USDC Balance</dt><dd>{balance ?? "Reading…"}</dd></div>
       </dl>
       {error && <p className="execution-error" role="alert">{error}</p>}
       <button className="button secondary" type="button" onClick={reset}>Disconnect</button>
       <small className="execution-note">Disconnect resets Veriq locally; wallet permissions are managed by your wallet.</small>
     </>}
-  </section>{connected && providerRef.current && <CreateFundedJobStep key={address.toLowerCase()} client={address} provider={providerRef.current} onBalanceRefresh={()=>refreshBalance(address)}/>}</div>;
+  </section>{connected && providerRef.current && <InteractiveJobFlow key={address.toLowerCase()} account={address} provider={providerRef.current} onRoleChange={setRole} onBalanceRefresh={()=>refreshBalance(address)}/>}</div>;
 }

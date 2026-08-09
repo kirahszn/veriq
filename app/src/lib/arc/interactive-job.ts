@@ -55,7 +55,9 @@ export interface PersistedInteractiveJob {
   expectedAnswerCommitment: Hex;
   expectedAnswerHashes: readonly Hex[];
   budget: "1000000";
-  status: "Funded";
+  status: "Funded" | "Accepted";
+  acceptanceTransactionHash?: Hash | null;
+  confirmedProvider?: Address;
 }
 
 export function serializeInteractiveJob(state: PersistedInteractiveJob): string { return JSON.stringify(state); }
@@ -64,7 +66,7 @@ export function parsePersistedInteractiveJob(value: string | null): PersistedInt
   if (!value) return null;
   try {
     const state = JSON.parse(value) as Partial<PersistedInteractiveJob>;
-    if (state.version !== 1 || state.chainId !== 5_042_002 || state.status !== "Funded" || state.budget !== "1000000") return null;
+    if (state.version !== 1 || state.chainId !== 5_042_002 || !["Funded", "Accepted"].includes(state.status ?? "") || state.budget !== "1000000") return null;
     if (!isAddress(state.client) || !isAddress(state.provider) || state.provider.toLowerCase() !== INTERACTIVE_PROVIDER_ADDRESS.toLowerCase()) return null;
     if (!/^\d+$/.test(state.jobId ?? "") || !/^0x[0-9a-f]{64}$/i.test(state.createTransactionHash ?? "")) return null;
     if (state.taskSpecHash !== INTERACTIVE_TASK_SPEC_HASH || state.canonicalizationVersionHash !== INTERACTIVE_CANONICALIZATION_HASH) return null;
@@ -72,6 +74,8 @@ export function parsePersistedInteractiveJob(value: string | null): PersistedInt
     if (commitExpectedAnswers(state.expectedAnswerHashes as Hex[]) !== INTERACTIVE_EXPECTED_COMMITMENT) return null;
     if (JSON.stringify(state.metricPoints) !== JSON.stringify(INTERACTIVE_METRIC_POINTS.map(String))) return null;
     if (JSON.stringify(state.payoutBps) !== JSON.stringify(INTERACTIVE_PAYOUT_BPS.map(String))) return null;
+    if (state.acceptanceTransactionHash != null && !/^0x[0-9a-f]{64}$/i.test(state.acceptanceTransactionHash)) return null;
+    if (state.confirmedProvider != null && (!isAddress(state.confirmedProvider) || state.confirmedProvider.toLowerCase() !== INTERACTIVE_PROVIDER_ADDRESS.toLowerCase())) return null;
     for (const deadline of [state.acceptanceDeadline, state.submissionDeadline, state.revealDeadline]) if (!/^\d+$/.test(deadline ?? "")) return null;
     return state as PersistedInteractiveJob;
   } catch { return null; }
