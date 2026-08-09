@@ -1,0 +1,8 @@
+export const veriqEscrowPayoutPreviewAbi = [
+  { type: "function", name: "getJob", stateMutability: "view", inputs: [{ name: "jobId", type: "uint256" }], outputs: [{ name: "client", type: "address" }, { name: "provider", type: "address" }, { name: "budget", type: "uint256" }, { name: "taskSpecHash", type: "bytes32" }, { name: "expectedAnswerCommitment", type: "bytes32" }, { name: "canonicalizationVersionHash", type: "bytes32" }, { name: "acceptanceDeadline", type: "uint256" }, { name: "submissionDeadline", type: "uint256" }, { name: "revealDeadline", type: "uint256" }, { name: "status", type: "uint8" }] },
+  { type: "function", name: "getStatus", stateMutability: "view", inputs: [{ name: "jobId", type: "uint256" }], outputs: [{ name: "", type: "uint8" }] },
+  { type: "function", name: "getQualityBps", stateMutability: "view", inputs: [{ name: "jobId", type: "uint256" }], outputs: [{ name: "", type: "uint256" }] },
+  { type: "function", name: "getMetricPoints", stateMutability: "view", inputs: [{ name: "jobId", type: "uint256" }], outputs: [{ name: "", type: "uint256[]" }] },
+  { type: "function", name: "getPayoutBps", stateMutability: "view", inputs: [{ name: "jobId", type: "uint256" }], outputs: [{ name: "", type: "uint256[]" }] },
+  { type: "function", name: "getSettlementResult", stateMutability: "view", inputs: [{ name: "jobId", type: "uint256" }], outputs: [{ name: "qualityBps", type: "uint256" }, { name: "payoutBps", type: "uint256" }, { name: "providerPayment", type: "uint256" }, { name: "clientRefund", type: "uint256" }, { name: "status", type: "uint8" }] },
+] as const;
