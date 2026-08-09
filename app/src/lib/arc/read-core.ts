@@ -38,7 +38,7 @@ export async function readLiveArcState(client: ArcContractReadClient, escrowAbi:
   const [escrowBalance, providerBalance, clientBalance] = await Promise.all([VERIFIED_ESCROW_ADDRESS, provider, clientAddress].map(address => client.readContract({ address: ARC_USDC_ADDRESS, abi: usdcAbi, functionName: "balanceOf", args: [address] }).then(value => requireBigint("USDC balance", value))));
   if (status === "Settled" && providerPayment + clientRefund !== budget) throw new Error("Settled accounting does not equal budget");
   const job: NormalizedLiveJob = { id: 1, exists: true, client: clientAddress, provider, budget, status, qualityBps, payoutBps, providerPayment, clientRefund, expectedCommitment, providerCommitment, deadlines: { acceptance: requireBigint("Acceptance deadline", jobTuple[6]), submission: requireBigint("Submission deadline", jobTuple[7]), reveal: requireBigint("Reveal deadline", jobTuple[8]) } };
-  const warnings = integrityWarnings(job, providerHistory, escrowBalance);
+  const warnings = integrityWarnings(job, providerHistory);
   return { source: "LIVE", rpcState: warnings.length ? "Data mismatch" : "Live", fetchedAt: now.toISOString(), chainId, blockNumber, contractAddress: VERIFIED_ESCROW_ADDRESS, job, providerHistory, balances: { escrow: escrowBalance, provider: providerBalance, client: clientBalance }, warnings };
 }
 
@@ -73,14 +73,13 @@ export function classifyReadFailure(error: unknown): ArcReadFailureDiagnostic & 
   return { category: "unknown", name, message, warning: "Arc RPC is temporarily unavailable. Showing the verified Milestone 13B result." };
 }
 
-export function integrityWarnings(job: NormalizedLiveJob, history: NormalizedProviderHistory, escrowBalance: bigint): string[] {
+export function integrityWarnings(job: NormalizedLiveJob, history: NormalizedProviderHistory): string[] {
   const warnings: string[] = [];
   if (job.provider.toLowerCase() !== VERIFIED_PROVIDER.toLowerCase()) warnings.push(`Provider mismatch: expected ${VERIFIED_PROVIDER}, live ${job.provider}.`);
   if (job.budget !== VERIFIED_BUDGET) warnings.push(`Budget mismatch: expected ${VERIFIED_BUDGET} base units, live ${job.budget}.`);
   if (job.qualityBps !== 9200) warnings.push(`Quality mismatch: expected 9200 bps, live ${job.qualityBps} bps.`);
   if (job.payoutBps !== 8500) warnings.push(`Payout mismatch: expected 8500 bps, live ${job.payoutBps} bps.`);
   if (job.status !== "Settled") warnings.push(`Status mismatch: expected Settled, live ${job.status}.`);
-  if (job.status === "Settled" && escrowBalance !== 0n) warnings.push(`Escrow currently holds ${escrowBalance} USDC base units; this may include unrelated funds.`);
   if (history.measuredJobs !== 1n || history.cumulativeQualityBps !== 9200n || history.averageQualityBps !== 9200n || history.completedJobs !== 1n || history.submissionDefaults !== 0n) warnings.push("Provider history differs from the previously verified result.");
   return warnings;
 }
