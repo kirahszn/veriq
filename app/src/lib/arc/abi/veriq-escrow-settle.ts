@@ -1,0 +1,12 @@
+export const veriqEscrowSettleAbi = [
+  { type:"function",name:"settle",stateMutability:"nonpayable",inputs:[{name:"jobId",type:"uint256"}],outputs:[] },
+  { type:"function",name:"getJob",stateMutability:"view",inputs:[{name:"jobId",type:"uint256"}],outputs:[{name:"client",type:"address"},{name:"provider",type:"address"},{name:"budget",type:"uint256"},{name:"taskSpecHash",type:"bytes32"},{name:"expectedAnswerCommitment",type:"bytes32"},{name:"canonicalizationVersionHash",type:"bytes32"},{name:"acceptanceDeadline",type:"uint256"},{name:"submissionDeadline",type:"uint256"},{name:"revealDeadline",type:"uint256"},{name:"status",type:"uint8"}] },
+  { type:"function",name:"getStatus",stateMutability:"view",inputs:[{name:"jobId",type:"uint256"}],outputs:[{name:"",type:"uint8"}] },
+  { type:"function",name:"getQualityBps",stateMutability:"view",inputs:[{name:"jobId",type:"uint256"}],outputs:[{name:"",type:"uint256"}] },
+  { type:"function",name:"getMetricPoints",stateMutability:"view",inputs:[{name:"jobId",type:"uint256"}],outputs:[{name:"",type:"uint256[]"}] },
+  { type:"function",name:"getPayoutBps",stateMutability:"view",inputs:[{name:"jobId",type:"uint256"}],outputs:[{name:"",type:"uint256[]"}] },
+  { type:"function",name:"getSettlementResult",stateMutability:"view",inputs:[{name:"jobId",type:"uint256"}],outputs:[{name:"qualityBps",type:"uint256"},{name:"payoutBps",type:"uint256"},{name:"providerPayment",type:"uint256"},{name:"clientRefund",type:"uint256"},{name:"status",type:"uint8"}] },
+  { type:"function",name:"getProviderHistory",stateMutability:"view",inputs:[{name:"provider",type:"address"}],outputs:[{name:"measuredJobs",type:"uint256"},{name:"cumulativeQualityBps",type:"uint256"},{name:"averageQualityBps",type:"uint256"},{name:"completedJobs",type:"uint256"},{name:"submissionDefaults",type:"uint256"}] },
+  { type:"event",name:"JobSettled",anonymous:false,inputs:[{indexed:true,name:"jobId",type:"uint256"},{indexed:false,name:"qualityBps",type:"uint256"},{indexed:false,name:"payoutBps",type:"uint256"},{indexed:false,name:"providerPayment",type:"uint256"},{indexed:false,name:"clientRefund",type:"uint256"}] },
+  { type:"event",name:"ProviderHistoryUpdated",anonymous:false,inputs:[{indexed:true,name:"provider",type:"address"},{indexed:false,name:"measuredJobs",type:"uint256"},{indexed:false,name:"cumulativeQualityBps",type:"uint256"},{indexed:false,name:"completedJobs",type:"uint256"},{indexed:false,name:"submissionDefaults",type:"uint256"}] },
+] as const;

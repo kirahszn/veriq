@@ -7,7 +7,7 @@ import { INTERACTIVE_BUDGET, INTERACTIVE_ESCROW_ADDRESS, INTERACTIVE_METRIC_POIN
 export interface PreviewLiveJob { client:Address;provider:Address;budget:bigint;status:number }
 export interface StoredSettlement { qualityBps:bigint;payoutBps:bigint;providerPayment:bigint;clientRefund:bigint;status:number }
 export interface PayoutPreviewReader { readJob(jobId:bigint):Promise<PreviewLiveJob>;readStatus(jobId:bigint):Promise<number>;readQualityBps(jobId:bigint):Promise<bigint>;readMetricPoints(jobId:bigint):Promise<readonly bigint[]>;readPayoutPoints(jobId:bigint):Promise<readonly bigint[]>;readSettlementResult(jobId:bigint):Promise<StoredSettlement> }
-export interface PayoutPreview { jobId:bigint;qualityBps:number;budget:bigint;metricPoints:readonly number[];payoutPoints:readonly number[];payoutBps:number;providerPayment:bigint;clientRefund:bigint;status:"Ready to Settle" }
+export interface PayoutPreview { jobId:bigint;qualityBps:number;budget:bigint;metricPoints:readonly number[];payoutPoints:readonly number[];payoutBps:number;providerPayment:bigint;clientRefund:bigint;status:"Ready to Settle"|"Calculation Used" }
 
 export async function calculateLivePayoutPreview(reader:PayoutPreviewReader,state:PersistedInteractiveJob):Promise<PayoutPreview>{
   const jobId=BigInt(state.jobId);

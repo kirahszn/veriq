@@ -65,7 +65,7 @@ export interface PersistedInteractiveJob {
   expectedAnswerCommitment: Hex;
   expectedAnswerHashes: readonly Hex[];
   budget: "1000000";
-  status: "Funded" | "Accepted" | "Submitted" | "Scored";
+  status: "Funded" | "Accepted" | "Submitted" | "Scored" | "Settled";
   acceptanceTransactionHash?: Hash | null;
   confirmedProvider?: Address;
   providerAnswerHashes?: readonly Hex[];
@@ -74,6 +74,11 @@ export interface PersistedInteractiveJob {
   answerCount?: 50;
   qualityBps?: 9200;
   revealTransactionHash?: Hash | null;
+  settledPayoutBps?: 8500;
+  providerPayment?: "850000";
+  clientRefund?: "150000";
+  settlementTransactionHash?: Hash | null;
+  providerHistoryUpdated?: true;
 }
 
 export function serializeInteractiveJob(state: PersistedInteractiveJob): string { return JSON.stringify(state); }
@@ -82,7 +87,7 @@ export function parsePersistedInteractiveJob(value: string | null): PersistedInt
   if (!value) return null;
   try {
     const state = JSON.parse(value) as Partial<PersistedInteractiveJob>;
-    if (state.version !== 1 || state.chainId !== 5_042_002 || !["Funded", "Accepted", "Submitted", "Scored"].includes(state.status ?? "") || state.budget !== "1000000") return null;
+    if (state.version !== 1 || state.chainId !== 5_042_002 || !["Funded", "Accepted", "Submitted", "Scored", "Settled"].includes(state.status ?? "") || state.budget !== "1000000") return null;
     if (!isAddress(state.client) || !isAddress(state.provider) || state.provider.toLowerCase() !== INTERACTIVE_PROVIDER_ADDRESS.toLowerCase()) return null;
     if (!/^\d+$/.test(state.jobId ?? "") || !/^0x[0-9a-f]{64}$/i.test(state.createTransactionHash ?? "")) return null;
     if (state.taskSpecHash !== INTERACTIVE_TASK_SPEC_HASH || state.canonicalizationVersionHash !== INTERACTIVE_CANONICALIZATION_HASH) return null;
@@ -93,12 +98,14 @@ export function parsePersistedInteractiveJob(value: string | null): PersistedInt
     if (state.acceptanceTransactionHash != null && !/^0x[0-9a-f]{64}$/i.test(state.acceptanceTransactionHash)) return null;
     if (state.confirmedProvider != null && (!isAddress(state.confirmedProvider) || state.confirmedProvider.toLowerCase() !== INTERACTIVE_PROVIDER_ADDRESS.toLowerCase())) return null;
     if (state.commitTransactionHash != null && !/^0x[0-9a-f]{64}$/i.test(state.commitTransactionHash)) return null;
-    if (state.status === "Submitted" || state.status === "Scored") {
+    if (state.status === "Submitted" || state.status === "Scored" || state.status === "Settled") {
       if (state.answerCount !== 50 || state.providerResultCommitment !== INTERACTIVE_PROVIDER_COMMITMENT || !Array.isArray(state.providerAnswerHashes)) return null;
       if (commitAnswers(state.providerAnswerHashes as Hex[]) !== INTERACTIVE_PROVIDER_COMMITMENT) return null;
     }
     if (state.revealTransactionHash != null && !/^0x[0-9a-f]{64}$/i.test(state.revealTransactionHash)) return null;
-    if (state.status === "Scored" && state.qualityBps !== 9200) return null;
+    if ((state.status === "Scored" || state.status === "Settled") && state.qualityBps !== 9200) return null;
+    if (state.settlementTransactionHash != null && !/^0x[0-9a-f]{64}$/i.test(state.settlementTransactionHash)) return null;
+    if (state.status === "Settled" && (state.settledPayoutBps !== 8500 || state.providerPayment !== "850000" || state.clientRefund !== "150000" || state.providerHistoryUpdated !== true)) return null;
     for (const deadline of [state.acceptanceDeadline, state.submissionDeadline, state.revealDeadline]) if (!/^\d+$/.test(deadline ?? "")) return null;
     return state as PersistedInteractiveJob;
   } catch { return null; }
