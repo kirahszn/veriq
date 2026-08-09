@@ -10,6 +10,7 @@ import { ProviderCommitStep } from "./ProviderCommitStep";
 import { RevealScoreStep } from "./RevealScoreStep";
 import { PayoutCalculationStep } from "./PayoutCalculationStep";
 import { SettleUsdcStep } from "./SettleUsdcStep";
+import { FinalSettlementReceipt } from "./FinalSettlementReceipt";
 export type InteractiveRole = "Client" | "Provider" | "Unrelated wallet";
 export interface InteractiveStorage { removeItem(key:string):void }
 export function clearActiveInteractiveRun(storage:InteractiveStorage):void{storage.removeItem(INTERACTIVE_STORAGE_KEY)}
@@ -21,6 +22,6 @@ export function InteractiveJobFlow({account,provider,onRoleChange,onBalanceRefre
   function startNewRun(){clearActiveInteractiveRun(localStorage);setJob(null);setError(null);setLoading(false);onRoleChange("Client")}
   if(loading)return <div className="state-card"><strong>Validating interactive job</strong><span>Reading Arc state before enabling actions.</span></div>;
   if(error)return <><ActiveRunReset onReset={startNewRun}/><div className="state-card error" role="alert"><strong>Interactive job unavailable</strong><span>{error}</span></div></>;
-  return <>{job&&<ActiveRunReset onReset={startNewRun}/>}<CreateFundedJobStep client={account} provider={provider} onBalanceRefresh={onBalanceRefresh} activeJob={job} onJobFunded={updateJob}/>{job&&<ProviderAcceptStep account={account} provider={provider} job={job} onAccepted={updateJob}/>} {job&&["Accepted","Submitted","Scored","Settled"].includes(job.status)&&<ProviderCommitStep account={account} provider={provider} job={job} onCommitted={updateJob}/>} {job&&["Submitted","Scored","Settled"].includes(job.status)&&<RevealScoreStep account={account} provider={provider} job={job} onScored={updateJob}/>} {job&&["Scored","Settled"].includes(job.status)&&<PayoutCalculationStep job={job}/>} {job&&["Scored","Settled"].includes(job.status)&&<SettleUsdcStep account={account} provider={provider} job={job} onSettled={updateJob}/>}</>;
+  return <>{job&&<ActiveRunReset onReset={startNewRun}/>}<CreateFundedJobStep client={account} provider={provider} onBalanceRefresh={onBalanceRefresh} activeJob={job} onJobFunded={updateJob}/>{job&&<ProviderAcceptStep account={account} provider={provider} job={job} onAccepted={updateJob}/>} {job&&["Accepted","Submitted","Scored","Settled"].includes(job.status)&&<ProviderCommitStep account={account} provider={provider} job={job} onCommitted={updateJob}/>} {job&&["Submitted","Scored","Settled"].includes(job.status)&&<RevealScoreStep account={account} provider={provider} job={job} onScored={updateJob}/>} {job&&["Scored","Settled"].includes(job.status)&&<PayoutCalculationStep job={job}/>} {job&&["Scored","Settled"].includes(job.status)&&<SettleUsdcStep account={account} provider={provider} job={job} onSettled={updateJob}/>} {job&&<FinalSettlementReceipt job={job}/>}</>;
 }
 function roleFor(account:Address,job:PersistedInteractiveJob):InteractiveRole{if(account.toLowerCase()===job.client.toLowerCase())return "Client";if(account.toLowerCase()===job.provider.toLowerCase())return "Provider";return "Unrelated wallet"}
