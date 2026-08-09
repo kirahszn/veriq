@@ -1,6 +1,7 @@
 import { createPublicClient, createWalletClient, custom, decodeEventLog, http, type Address, type Hash, type Hex } from "viem";
 import { veriqEscrowAcceptAbi } from "../arc/abi/veriq-escrow-accept";
 import { veriqEscrowCommitAbi } from "../arc/abi/veriq-escrow-commit";
+import { veriqEscrowRevealAbi } from "../arc/abi/veriq-escrow-reveal";
 import { ARC_TESTNET_CHAIN_ID, ARC_TESTNET_RPC_URL, arcTestnet } from "../arc/chain";
 import { buildProviderAnswerHashes, INTERACTIVE_BUDGET, INTERACTIVE_CANONICALIZATION_HASH, INTERACTIVE_ESCROW_ADDRESS, INTERACTIVE_EXPECTED_COMMITMENT, INTERACTIVE_PROVIDER_COMMITMENT, INTERACTIVE_TASK_SPEC_HASH, type PersistedInteractiveJob } from "../arc/interactive-job";
 import { readInjectedAccounts, readInjectedChainId, type InjectedProvider } from "./injectedWallet";
@@ -75,14 +76,15 @@ export function createBrowserAcceptAdapter(provider: InjectedProvider): AcceptJo
 
 export async function recoverInteractiveJob(state: PersistedInteractiveJob): Promise<PersistedInteractiveJob> {
   const client = createPublicClient({ chain: arcTestnet, transport: http(ARC_TESTNET_RPC_URL) });
-  const jobId=BigInt(state.jobId);const [value,resultCommitment] = await Promise.all([
+  const jobId=BigInt(state.jobId);const [value,resultCommitment,qualityBps] = await Promise.all([
     client.readContract({ address: INTERACTIVE_ESCROW_ADDRESS, abi: veriqEscrowAcceptAbi, functionName: "getJob", args: [jobId] }),
     client.readContract({ address: INTERACTIVE_ESCROW_ADDRESS, abi: veriqEscrowCommitAbi, functionName: "getResultCommitment", args: [jobId] }),
+    client.readContract({ address: INTERACTIVE_ESCROW_ADDRESS, abi: veriqEscrowRevealAbi, functionName: "getQualityBps", args: [jobId] }),
   ]);
   if(value[3]!==INTERACTIVE_TASK_SPEC_HASH||value[4]!==INTERACTIVE_EXPECTED_COMMITMENT||value[5]!==INTERACTIVE_CANONICALIZATION_HASH||value[6].toString()!==state.acceptanceDeadline||value[7].toString()!==state.submissionDeadline||value[8].toString()!==state.revealDeadline)throw new Error("Saved interactive job policy does not match Arc.");
-  return reconcileRecoveredJob(state,{client:value[0],provider:value[1],budget:value[2],acceptanceDeadline:value[6],status:value[9]},resultCommitment);
+  return reconcileRecoveredJob(state,{client:value[0],provider:value[1],budget:value[2],acceptanceDeadline:value[6],status:value[9]},resultCommitment,qualityBps);
 }
-export function reconcileRecoveredJob(state:PersistedInteractiveJob,live:AcceptanceJob,resultCommitment?:Hex):PersistedInteractiveJob{
+export function reconcileRecoveredJob(state:PersistedInteractiveJob,live:AcceptanceJob,resultCommitment?:Hex,qualityBps?:bigint):PersistedInteractiveJob{
   if (live.client.toLowerCase() !== state.client.toLowerCase() || live.provider.toLowerCase() !== state.provider.toLowerCase() || live.budget !== INTERACTIVE_BUDGET) throw new Error("Saved interactive job does not match Arc.");
   if (live.status === 1) return { ...state, status: "Funded" };
   if (live.status === 2) return { ...state, status: "Accepted", confirmedProvider: live.provider, acceptanceTransactionHash: state.acceptanceTransactionHash ?? null };
@@ -90,7 +92,12 @@ export function reconcileRecoveredJob(state:PersistedInteractiveJob,live:Accepta
     if (resultCommitment?.toLowerCase() !== INTERACTIVE_PROVIDER_COMMITMENT) throw new Error("Submitted result commitment does not match the deterministic provider fixture.");
     return { ...state, status: "Submitted", confirmedProvider: live.provider, providerAnswerHashes: buildProviderAnswerHashes(), providerResultCommitment: INTERACTIVE_PROVIDER_COMMITMENT, commitTransactionHash: state.commitTransactionHash ?? null, answerCount: 50 };
   }
-  throw new Error("Interactive job is no longer Funded, Accepted, or Submitted.");
+  if (live.status === 4) {
+    if (resultCommitment?.toLowerCase() !== INTERACTIVE_PROVIDER_COMMITMENT) throw new Error("Scored result commitment does not match the deterministic provider fixture.");
+    if (qualityBps !== 9200n) throw new Error("Scored quality does not match the deterministic fixture.");
+    return { ...state, status: "Scored", confirmedProvider: live.provider, providerAnswerHashes: buildProviderAnswerHashes(), providerResultCommitment: INTERACTIVE_PROVIDER_COMMITMENT, commitTransactionHash: state.commitTransactionHash ?? null, answerCount: 50, qualityBps: 9200, revealTransactionHash: state.revealTransactionHash ?? null };
+  }
+  throw new Error("Interactive job is no longer Funded, Accepted, Submitted, or Scored.");
 }
 
 function verifyAssignedJob(live: AcceptanceJob, state: PersistedInteractiveJob, connected: Address): void {
