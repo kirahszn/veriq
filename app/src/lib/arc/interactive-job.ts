@@ -1,4 +1,5 @@
 import { encodeAbiParameters, keccak256, stringToHex, type Address, type Hash, type Hex } from "viem";
+import { buildAnswerFixtures, commitAnswers } from "../local-chain/answers";
 
 export const INTERACTIVE_ESCROW_ADDRESS: Address = "0xd7bc6d86afcf8f4fdc02e990222951978afd311b";
 export const INTERACTIVE_PROVIDER_ADDRESS: Address = "0x63Fb95A23e81DCf3595c809d9E237eDEFBBB4898";
@@ -12,6 +13,7 @@ export const INTERACTIVE_CANONICALIZATION_HASH: Hex = "0x5263eb612ed941a7d819900
 export const INTERACTIVE_METRIC_POINTS = [7000n, 9000n, 9800n] as const;
 export const INTERACTIVE_PAYOUT_BPS = [0n, 8000n, 10000n] as const;
 export const INTERACTIVE_EXPECTED_COMMITMENT: Hex = "0x94bf247d8595ef08f82f1b3d7b75b538d201524e6be889531ec6eeaa3f8b7dc6";
+export const INTERACTIVE_PROVIDER_COMMITMENT: Hex = "0xee6e7769b59dd751b129528da43777ec98d2e20fb281f3b250f7e3f6e6ab9a2c";
 export const INTERACTIVE_STORAGE_KEY = "veriq:arc-testnet:interactive-job:v1";
 
 export function buildExpectedAnswerHashes(): Hex[] {
@@ -21,6 +23,14 @@ export function buildExpectedAnswerHashes(): Hex[] {
 export function commitExpectedAnswers(answers: readonly Hex[]): Hex {
   if (answers.length !== 50) throw new Error("Exactly 50 expected-answer hashes are required");
   return keccak256(encodeAbiParameters([{ type: "bytes32[]" }], [answers]));
+}
+
+export function buildProviderAnswerHashes(): Hex[] {
+  const { expected, provider, providerCommitment } = buildAnswerFixtures();
+  if (provider.length !== 50 || provider.slice(0, 46).some((answer, index) => answer !== expected[index])) throw new Error("Interactive provider fixture mismatch");
+  if (provider.slice(46).some((answer, index) => answer === expected[index + 46])) throw new Error("Interactive provider mismatches are missing");
+  if (providerCommitment !== INTERACTIVE_PROVIDER_COMMITMENT || commitAnswers(provider) !== INTERACTIVE_PROVIDER_COMMITMENT) throw new Error("Interactive provider commitment mismatch");
+  return provider;
 }
 
 export function buildInteractiveJobParameters(blockTimestamp: bigint) {
@@ -55,9 +65,13 @@ export interface PersistedInteractiveJob {
   expectedAnswerCommitment: Hex;
   expectedAnswerHashes: readonly Hex[];
   budget: "1000000";
-  status: "Funded" | "Accepted";
+  status: "Funded" | "Accepted" | "Submitted";
   acceptanceTransactionHash?: Hash | null;
   confirmedProvider?: Address;
+  providerAnswerHashes?: readonly Hex[];
+  providerResultCommitment?: Hex;
+  commitTransactionHash?: Hash | null;
+  answerCount?: 50;
 }
 
 export function serializeInteractiveJob(state: PersistedInteractiveJob): string { return JSON.stringify(state); }
@@ -66,7 +80,7 @@ export function parsePersistedInteractiveJob(value: string | null): PersistedInt
   if (!value) return null;
   try {
     const state = JSON.parse(value) as Partial<PersistedInteractiveJob>;
-    if (state.version !== 1 || state.chainId !== 5_042_002 || !["Funded", "Accepted"].includes(state.status ?? "") || state.budget !== "1000000") return null;
+    if (state.version !== 1 || state.chainId !== 5_042_002 || !["Funded", "Accepted", "Submitted"].includes(state.status ?? "") || state.budget !== "1000000") return null;
     if (!isAddress(state.client) || !isAddress(state.provider) || state.provider.toLowerCase() !== INTERACTIVE_PROVIDER_ADDRESS.toLowerCase()) return null;
     if (!/^\d+$/.test(state.jobId ?? "") || !/^0x[0-9a-f]{64}$/i.test(state.createTransactionHash ?? "")) return null;
     if (state.taskSpecHash !== INTERACTIVE_TASK_SPEC_HASH || state.canonicalizationVersionHash !== INTERACTIVE_CANONICALIZATION_HASH) return null;
@@ -76,6 +90,11 @@ export function parsePersistedInteractiveJob(value: string | null): PersistedInt
     if (JSON.stringify(state.payoutBps) !== JSON.stringify(INTERACTIVE_PAYOUT_BPS.map(String))) return null;
     if (state.acceptanceTransactionHash != null && !/^0x[0-9a-f]{64}$/i.test(state.acceptanceTransactionHash)) return null;
     if (state.confirmedProvider != null && (!isAddress(state.confirmedProvider) || state.confirmedProvider.toLowerCase() !== INTERACTIVE_PROVIDER_ADDRESS.toLowerCase())) return null;
+    if (state.commitTransactionHash != null && !/^0x[0-9a-f]{64}$/i.test(state.commitTransactionHash)) return null;
+    if (state.status === "Submitted") {
+      if (state.answerCount !== 50 || state.providerResultCommitment !== INTERACTIVE_PROVIDER_COMMITMENT || !Array.isArray(state.providerAnswerHashes)) return null;
+      if (commitAnswers(state.providerAnswerHashes as Hex[]) !== INTERACTIVE_PROVIDER_COMMITMENT) return null;
+    }
     for (const deadline of [state.acceptanceDeadline, state.submissionDeadline, state.revealDeadline]) if (!/^\d+$/.test(deadline ?? "")) return null;
     return state as PersistedInteractiveJob;
   } catch { return null; }

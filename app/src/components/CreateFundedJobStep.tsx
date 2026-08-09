@@ -65,7 +65,7 @@ export function CreateFundedJobStep({ client, provider, onBalanceRefresh, active
     </> : <>
       <dl className="execution-metadata execution-result">
         <div><dt>Job ID</dt><dd>#{funded.jobId}</dd></div>
-        <div><dt>Status</dt><dd className="success">{funded.status}</dd></div>
+        <div><dt>Status</dt><dd className="success">Funded</dd></div>
         <div><dt>Budget</dt><dd>{formatBudget(INTERACTIVE_BUDGET)} USDC</dd></div>
         <div><dt>Client</dt><dd><AddressDisplay address={funded.client}/></dd></div>
         <div><dt>Provider</dt><dd><AddressDisplay address={funded.provider}/></dd></div>

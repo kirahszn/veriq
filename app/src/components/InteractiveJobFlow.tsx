@@ -6,6 +6,7 @@ import { recoverInteractiveJob } from "../lib/wallet/acceptFundedJob";
 import type { InjectedProvider } from "../lib/wallet/injectedWallet";
 import { CreateFundedJobStep } from "./CreateFundedJobStep";
 import { ProviderAcceptStep } from "./ProviderAcceptStep";
+import { ProviderCommitStep } from "./ProviderCommitStep";
 export type InteractiveRole = "Client" | "Provider" | "Unrelated wallet";
 export function InteractiveJobFlow({account,provider,onRoleChange,onBalanceRefresh}:{account:Address;provider:InjectedProvider;onRoleChange:(role:InteractiveRole)=>void;onBalanceRefresh:()=>Promise<void>}){
   const [job,setJob]=useState<PersistedInteractiveJob|null>(null);const [loading,setLoading]=useState(true);const [error,setError]=useState<string|null>(null);
@@ -13,6 +14,6 @@ export function InteractiveJobFlow({account,provider,onRoleChange,onBalanceRefre
   function updateJob(next:PersistedInteractiveJob){setJob(next);try{localStorage.setItem(INTERACTIVE_STORAGE_KEY,serializeInteractiveJob(next))}catch{}onRoleChange(roleFor(account,next))}
   if(loading)return <div className="state-card"><strong>Validating interactive job</strong><span>Reading Arc state before enabling actions.</span></div>;
   if(error)return <div className="state-card error" role="alert"><strong>Interactive job unavailable</strong><span>{error}</span></div>;
-  return <><CreateFundedJobStep client={account} provider={provider} onBalanceRefresh={onBalanceRefresh} activeJob={job} onJobFunded={updateJob}/>{job&&<ProviderAcceptStep account={account} provider={provider} job={job} onAccepted={updateJob}/>}</>;
+  return <><CreateFundedJobStep client={account} provider={provider} onBalanceRefresh={onBalanceRefresh} activeJob={job} onJobFunded={updateJob}/>{job&&<ProviderAcceptStep account={account} provider={provider} job={job} onAccepted={updateJob}/>} {job&&(job.status==="Accepted"||job.status==="Submitted")&&<ProviderCommitStep account={account} provider={provider} job={job} onCommitted={updateJob}/>}</>;
 }
 function roleFor(account:Address,job:PersistedInteractiveJob):InteractiveRole{if(account.toLowerCase()===job.client.toLowerCase())return "Client";if(account.toLowerCase()===job.provider.toLowerCase())return "Provider";return "Unrelated wallet"}
